@@ -1,0 +1,14 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\{Product,QuoteRequest,ImportRequest,ContactMessage,Shipment};
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+class ApiController extends Controller {
+ public function products(Request $r){$q=Product::query();foreach(['category','condition','origin','availability','brand'] as $f)if($r->$f)$q->where($f,$r->$f);if($r->search)$q->where(fn($x)=>$x->where('name','like','%'.$r->search.'%')->orWhere('brand','like','%'.$r->search.'%'));if($r->min_price)$q->where('price','>=',$r->min_price);if($r->max_price)$q->where('price','<=',$r->max_price);$q=match($r->sort){'price_asc'=>$q->orderBy('price'),'price_desc'=>$q->orderByDesc('price'),'popular'=>$q->orderByDesc('featured'),default=>$q->latest()};return $q->paginate(12);}
+ public function product(Product $product){return $product;}
+ public function quote(Request $r){$data=$r->validate(['full_name'=>'required|string|max:120','company'=>'nullable|string|max:120','email'=>'required|email','phone'=>'required|string|max:40','whatsapp'=>'nullable|string|max:40','country'=>'required|string|max:80','product'=>'required|string|max:180','quantity'=>'required|integer|min:1','destination_country'=>'required|string|max:80','destination_port'=>'nullable|string|max:100','shipping_method'=>'required|string|max:50','message'=>'nullable|string|max:2000']);$data['reference']='RFQ-'.now()->format('ymd').'-'.strtoupper(Str::random(5));return response()->json(QuoteRequest::create($data),201);}
+ public function importRequest(Request $r){$data=$r->validate(['customer_name'=>'required|string|max:120','email'=>'required|email','phone'=>'required|string|max:40','product_name'=>'required|string|max:180','category'=>'required|string|max:80','brand'=>'nullable|string|max:80','model'=>'nullable|string|max:80','quantity'=>'required|integer|min:1','origin'=>'nullable|string|max:80','budget'=>'nullable|numeric|min:0','destination'=>'required|string|max:120','description'=>'required|string|max:3000']);$data['reference']='IMP-'.now()->format('ymd').'-'.strtoupper(Str::random(5));return response()->json(ImportRequest::create($data),201);}
+ public function contact(Request $r){return response()->json(ContactMessage::create($r->validate(['name'=>'required|string|max:120','email'=>'required|email','phone'=>'nullable|string|max:40','subject'=>'required|string|max:160','message'=>'required|string|max:2000'])),201);}
+ public function track($number){$s=Shipment::where('tracking_number',$number)->orWhere('order_number',$number)->first();return $s?:response()->json(['message'=>'No shipment found for that number.'],404);}
+ public function dashboard(){return ['products'=>Product::count(),'enquiries'=>QuoteRequest::count()+ImportRequest::count(),'new_quotes'=>QuoteRequest::where('status','New')->count(),'shipments'=>Shipment::count(),'in_transit'=>Shipment::where('current_status','In Transit')->count(),'recent_quotes'=>QuoteRequest::latest()->take(5)->get()];}
+}

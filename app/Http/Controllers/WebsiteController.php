@@ -1,0 +1,20 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\{ContactMessage,ImportRequest,Product,QuoteRequest,Shipment};
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+class WebsiteController extends Controller {
+ public function home(){return view('pages.home',['products'=>Product::where('featured',true)->take(4)->get()]);}
+ public function products(Request $r){$q=Product::query();$q->when($r->filled('search'),fn($q)=>$q->where(fn($q)=>$q->where('name','like','%'.$r->search.'%')->orWhere('brand','like','%'.$r->search.'%')));$q->when($r->filled('category'),fn($q)=>$q->where('category',$r->category));match($r->sort){'price_asc'=>$q->orderBy('price'),'price_desc'=>$q->orderByDesc('price'),default=>$q->latest()};return view('pages.products',['products'=>$q->paginate(12)->withQueryString()]);}
+ public function product(Product $product){$product->load('images');$related=Product::where('category',$product->category)->whereKeyNot($product->id)->take(4)->get();return view('pages.product',compact('product','related'));}
+ public function saveProduct(Request $r,Product $product,string $list){$items=session($list,[]);$items[$product->id]=['name'=>$product->name,'slug'=>$product->slug,'price'=>$product->price];session([$list=>$items]);return back()->with('success',$product->name.' was added to your '.$list.'.');}
+ public function quoteForm(Request $r){return view('pages.request',['type'=>'quote','selectedProduct'=>$r->product]);}
+ public function quoteStore(Request $r){$d=$r->validate(['full_name'=>'required|string|max:120','company'=>'nullable|string|max:120','email'=>'required|email','phone'=>'required|string|max:40','whatsapp'=>'nullable|string|max:40','country'=>'required|string|max:80','product'=>'required|string|max:180','quantity'=>'required|integer|min:1','destination_country'=>'required|string|max:80','destination_port'=>'nullable|string|max:100','shipping_method'=>'required|string|max:50','message'=>'nullable|string|max:2000']);$d['reference']='RFQ-'.now()->format('ymd').'-'.strtoupper(Str::random(5));$x=QuoteRequest::create($d);return back()->with('success','Quotation request received. Your reference is '.$x->reference.'.');}
+ public function importForm(){return view('pages.request',['type'=>'import','selectedProduct'=>null]);}
+ public function importStore(Request $r){$d=$r->validate(['customer_name'=>'required|string|max:120','email'=>'required|email','phone'=>'required|string|max:40','product_name'=>'required|string|max:180','category'=>'required|string|max:80','brand'=>'nullable|string|max:80','model'=>'nullable|string|max:80','quantity'=>'required|integer|min:1','origin'=>'nullable|string|max:80','budget'=>'nullable|numeric|min:0','destination'=>'required|string|max:120','description'=>'required|string|max:3000']);$d['reference']='IMP-'.now()->format('ymd').'-'.strtoupper(Str::random(5));$x=ImportRequest::create($d);return back()->with('success','Import request received. Your reference is '.$x->reference.'.');}
+ public function tracking(){return view('pages.tracking');}
+ public function track(Request $r){$d=$r->validate(['number'=>'required|string|max:60']);$shipment=Shipment::where('tracking_number',$d['number'])->orWhere('order_number',$d['number'])->first();return view('pages.tracking',compact('shipment'))->with('searched',true);}
+ public function contact(){return view('pages.contact');}
+ public function contactStore(Request $r){ContactMessage::create($r->validate(['name'=>'required|string|max:120','email'=>'required|email','phone'=>'nullable|string|max:40','subject'=>'required|string|max:160','message'=>'required|string|max:2000']));return back()->with('success','Thank you. Your message has been sent successfully.');}
+ public function admin(){return view('pages.admin',['stats'=>['products'=>Product::count(),'enquiries'=>QuoteRequest::count()+ImportRequest::count(),'quotes'=>QuoteRequest::where('status','New')->count(),'transit'=>Shipment::where('current_status','In Transit')->count()],'quotes'=>QuoteRequest::latest()->take(8)->get()]);}
+}
