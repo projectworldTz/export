@@ -1,0 +1,2 @@
+@php($logo=$globalSettings->get('site_logo')) @php($name=$globalSettings->get('site_name')?:'NEXPORT') @php($tagline=$globalSettings->get('site_tagline')?:'GLOBAL TRADE')
+<a class="logo {{ $class ?? '' }}" href="{{ route('home') }}">@if($logo)<img class="site-logo-image" src="{{ asset($logo) }}" alt="{{ $name }} logo">@else<span class="logo-mark">&#9875;</span>@endif<span class="logo-words"><b>{{ $name }}</b><small>{{ $tagline }}</small></span></a>
