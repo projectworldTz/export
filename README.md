@@ -18,6 +18,16 @@ Seeded administrator: `admin@nexport.test` / `password` (development only)
 
 The application uses the MySQL database `import_export`. Connection settings are stored in `.env`.
 
+## Production deployment
+
+After the initial server setup, deploy every backend and frontend change with:
+
+```bash
+./deploy.sh
+```
+
+The script pulls `origin/main`, installs optimized Composer dependencies, runs pending migrations, verifies public storage, fixes writable permissions, and rebuilds Laravel's production caches. It does not overwrite `.env` or reset local changes.
+
 ## Included modules
 
 - Responsive server-rendered corporate storefront and product catalogue
