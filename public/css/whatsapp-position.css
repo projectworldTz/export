@@ -1,0 +1,39 @@
+/* Final placement overrides for the floating WhatsApp control. */
+.whatsapp{
+ position:fixed!important;
+ right:max(20px,env(safe-area-inset-right))!important;
+ bottom:max(20px,env(safe-area-inset-bottom))!important;
+ left:auto!important;
+ top:auto!important;
+ width:58px!important;
+ height:58px!important;
+ padding:0!important;
+ margin:0!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ border-radius:50%!important;
+ background:#16a34a!important;
+ line-height:1!important;
+ z-index:9999!important;
+}
+.whatsapp::before{
+ display:block!important;
+ width:27px!important;
+ height:27px!important;
+ flex:0 0 27px!important;
+ margin:0!important;
+ position:static!important;
+}
+.whatsapp::after{
+ right:68px!important;
+ top:50%!important;
+ bottom:auto!important;
+ transform:translate(7px,-50%)!important;
+}
+.whatsapp:hover::after,.whatsapp:focus-visible::after{transform:translate(0,-50%)!important}
+@media(max-width:640px){
+ .whatsapp{right:max(14px,env(safe-area-inset-right))!important;bottom:max(14px,env(safe-area-inset-bottom))!important;width:54px!important;height:54px!important}
+ .whatsapp::before{width:25px!important;height:25px!important;flex-basis:25px!important}
+ .whatsapp::after{display:none!important}
+}
