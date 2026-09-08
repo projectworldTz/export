@@ -44,6 +44,10 @@ command -v composer >/dev/null 2>&1 || fail "Composer is not available."
 [ -f artisan ] || fail "Run this script from the Laravel project repository."
 [ -f .env ] || fail "The production .env file is missing."
 
+# Shared-hosting permission tools may toggle executable bits on placeholder
+# files. Ignore mode-only changes while continuing to protect file contents.
+git config core.fileMode false
+
 mkdir -p "$APP_DIR/storage/framework"
 mkdir "$LOCK_DIR" 2>/dev/null || fail "Another deployment appears to be running."
 
